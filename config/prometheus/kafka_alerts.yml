@@ -1,0 +1,119 @@
+# Kafka alert rules for Prometheus
+groups:
+  - name: kafka_broker_alerts
+    rules:
+      # Under-replicated partitions
+      - alert: KafkaUnderReplicatedPartitions
+        expr: kafka_server_replicamanager_underreplicatedpartitions > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka under-replicated partitions (instance {{ $labels.instance }})"
+          description: "Kafka has {{ $value }} under-replicated partitions on topic {{ $labels.topic }}"
+          
+      # Offline partitions
+      - alert: KafkaOfflinePartitions
+        expr: kafka_offline_partitions > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kafka offline partitions (instance {{ $labels.instance }})"
+          description: "Kafka has {{ $value }} offline partitions on topic {{ $labels.topic }}"
+          
+      # Offline replica count
+      - alert: KafkaOfflineReplicaCount
+        expr: kafka_server_replicamanager_offlinereplicacount > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kafka offline replicas (instance {{ $labels.instance }})"
+          description: "Kafka has {{ $value }} offline replicas"
+          
+      # Under min ISR partition count
+      - alert: KafkaUnderMinISRPartitionCount
+        expr: kafka_server_replicamanager_underminisrpartitioncount > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka under min ISR partitions (instance {{ $labels.instance }})"
+          description: "Kafka has {{ $value }} partitions under minimum ISR"
+          
+  - name: kafka_consumer_alerts
+    rules:
+      # Consumer lag warning
+      - alert: KafkaConsumerLagWarning
+        expr: kafka_consumer_lag > 1000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer lag warning (group {{ $labels.group }})"
+          description: "Consumer group {{ $labels.group }} has lag of {{ $value }} messages on topic {{ $labels.topic }} partition {{ $labels.partition }}"
+          
+      # Consumer lag critical
+      - alert: KafkaConsumerLagCritical
+        expr: kafka_consumer_lag > 10000
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kafka consumer lag critical (group {{ $labels.group }})"
+          description: "Consumer group {{ $labels.group }} has critical lag of {{ $value }} messages on topic {{ $labels.topic }} partition {{ $labels.partition }}"
+          
+      # Consumer group not consuming
+      - alert: KafkaConsumerGroupNotConsuming
+        expr: rate(kafka_consumer_lag[5m]) > 100
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer group not consuming (group {{ $labels.group }})"
+          description: "Consumer group {{ $labels.group }} lag is increasing at {{ $value }} messages/second on topic {{ $labels.topic }} partition {{ $labels.partition }}"
+          
+  - name: kafka_topic_alerts
+    rules:
+      # Topic partition count change
+      - alert: KafkaTopicPartitionCountChange
+        expr: changes(kafka_topic_partition_count[1h]) > 0
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "Kafka topic partition count changed (topic {{ $labels.topic }})"
+          description: "Topic {{ $labels.topic }} partition count has changed"
+          
+      # Topic message rate anomaly
+      - alert: KafkaTopicMessageRateAnomaly
+        expr: abs(rate(kafka_topic_message_count[5m]) - avg_over_time(rate(kafka_topic_message_count[5m])[1h:5m])) > 2 * stddev_over_time(rate(kafka_topic_message_count[5m])[1h:5m])
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka topic message rate anomaly (topic {{ $labels.topic }})"
+          description: "Topic {{ $labels.topic }} message rate is outside normal range"
+          
+  - name: kafka_jvm_alerts
+    rules:
+      # High JVM memory usage
+      - alert: KafkaHighJVMMemoryUsage
+        expr: jvm_memory_heap_used / jvm_memory_heap_max > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka high JVM memory usage (instance {{ $labels.instance }})"
+          description: "Kafka JVM heap usage is at {{ $value | humanizePercentage }}"
+          
+      # High GC time
+      - alert: KafkaHighGCTime
+        expr: rate(jvm_gc_collection_time_seconds[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka high GC time (instance {{ $labels.instance }})"
+          description: "Kafka GC time is {{ $value }} seconds per second"

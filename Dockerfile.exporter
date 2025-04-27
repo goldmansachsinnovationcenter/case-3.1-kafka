@@ -1,0 +1,16 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the Python scripts
+COPY kafka_metrics_exporter.py .
+COPY kafka_consumer_lag_monitor.py .
+COPY kafka_alert_publisher.py .
+COPY main.py .
+
+# Default command (can be overridden)
+CMD ["python", "main.py"]
