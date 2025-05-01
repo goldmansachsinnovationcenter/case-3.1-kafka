@@ -1,0 +1,114 @@
+# Alertmanager configuration for Kafka monitoring
+global:
+  # The smarthost and SMTP sender used for mail notifications.
+  smtp_smarthost: 'localhost:25'
+  smtp_from: 'alertmanager@example.com'
+  smtp_require_tls: false
+  
+  # The default time to wait before sending a notification again.
+  resolve_timeout: 5m
+
+# The root route on which each incoming alert enters.
+route:
+  # The labels by which incoming alerts are grouped together.
+  group_by: ['alertname', 'cluster', 'service']
+  
+  # When a new group of alerts is created by an incoming alert, wait at
+  # least 'group_wait' to send the initial notification.
+  group_wait: 30s
+  
+  # When the first notification was sent, wait 'group_interval' to send a batch
+  # of new alerts that started firing for that group.
+  group_interval: 5m
+  
+  # If an alert has successfully been sent, wait 'repeat_interval' to
+  # resend them.
+  repeat_interval: 3h
+  
+  # A default receiver
+  receiver: 'kafka-team'
+  
+  # All the above attributes are inherited by all child routes and can
+  # overwritten on each.
+  routes:
+    # Critical alerts should be sent immediately
+    - match:
+        severity: critical
+      receiver: 'kafka-team-critical'
+      group_wait: 10s
+      repeat_interval: 1h
+    
+    # Warning alerts can wait a bit longer
+    - match:
+        severity: warning
+      receiver: 'kafka-team-warning'
+      group_wait: 1m
+      repeat_interval: 4h
+    
+    # Info alerts are less urgent
+    - match:
+        severity: info
+      receiver: 'kafka-team-info'
+      group_wait: 5m
+      repeat_interval: 12h
+
+# Inhibition rules allow to mute a set of alerts given that another alert is
+# firing. We use this to mute any warning-level notifications if the same
+# alert is already critical.
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    # Apply inhibition if the alertname is the same.
+    equal: ['alertname', 'cluster', 'service']
+
+# Receivers configuration
+receivers:
+  - name: 'kafka-team'
+    email_configs:
+      - to: 'kafka-team@example.com'
+        send_resolved: true
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX'
+        channel: '#kafka-alerts'
+        send_resolved: true
+        title: '{{ template "slack.default.title" . }}'
+        text: '{{ template "slack.default.text" . }}'
+  
+  - name: 'kafka-team-critical'
+    email_configs:
+      - to: 'kafka-team@example.com'
+        send_resolved: true
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX'
+        channel: '#kafka-alerts-critical'
+        send_resolved: true
+        title: '🚨 CRITICAL: {{ template "slack.default.title" . }}'
+        text: '{{ template "slack.default.text" . }}'
+    pagerduty_configs:
+      - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
+        send_resolved: true
+  
+  - name: 'kafka-team-warning'
+    email_configs:
+      - to: 'kafka-team@example.com'
+        send_resolved: true
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX'
+        channel: '#kafka-alerts'
+        send_resolved: true
+        title: '⚠️ WARNING: {{ template "slack.default.title" . }}'
+        text: '{{ template "slack.default.text" . }}'
+  
+  - name: 'kafka-team-info'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX'
+        channel: '#kafka-alerts-info'
+        send_resolved: true
+        title: 'ℹ️ INFO: {{ template "slack.default.title" . }}'
+        text: '{{ template "slack.default.text" . }}'
+
+# Templates for notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'

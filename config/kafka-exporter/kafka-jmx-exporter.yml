@@ -1,0 +1,92 @@
+# JMX Exporter configuration for Kafka
+---
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+whitelistObjectNames:
+  # Kafka broker metrics
+  - kafka.server:type=ReplicaManager,name=UnderReplicatedPartitions
+  - kafka.server:type=ReplicaManager,name=OfflineReplicaCount
+  - kafka.server:type=ReplicaManager,name=UnderMinIsrPartitionCount
+  - kafka.server:type=ReplicaManager,name=AtMinIsrPartitionCount
+  - kafka.server:type=ReplicaManager,name=PartitionCount
+  - kafka.server:type=BrokerTopicMetrics,name=*
+  - kafka.server:type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent
+  - kafka.server:type=socket-server-metrics,name=*
+  - kafka.network:type=RequestMetrics,name=RequestsPerSec,request=*
+  - kafka.network:type=RequestMetrics,name=TotalTimeMs,request=*
+  - kafka.controller:type=KafkaController,name=*
+  - kafka.controller:type=ControllerStats,name=*
+  - kafka.log:type=Log,name=*
+  - kafka.cluster:type=Partition,name=UnderReplicated,topic=*,partition=*
+  
+  # JVM metrics
+  - java.lang:type=GarbageCollector,name=*
+  - java.lang:type=Memory,name=*
+  - java.lang:type=Threading,name=*
+  - java.lang:type=OperatingSystem,name=*
+  - java.lang:type=ClassLoading,name=*
+
+# Rules to transform metrics
+rules:
+  # Special cases for broker topic metrics
+  - pattern: kafka.server<type=(.+), name=(.+), topic=(.+)><>Count
+    name: kafka_server_$1_$2_count
+    type: COUNTER
+    labels:
+      topic: "$3"
+  
+  # Under-replicated partitions
+  - pattern: kafka.server<type=ReplicaManager, name=UnderReplicatedPartitions><>Value
+    name: kafka_server_replicamanager_underreplicatedpartitions
+    type: GAUGE
+    
+  # Offline replica count
+  - pattern: kafka.server<type=ReplicaManager, name=OfflineReplicaCount><>Value
+    name: kafka_server_replicamanager_offlinereplicacount
+    type: GAUGE
+    
+  # Under min ISR partition count
+  - pattern: kafka.server<type=ReplicaManager, name=UnderMinIsrPartitionCount><>Value
+    name: kafka_server_replicamanager_underminisrpartitioncount
+    type: GAUGE
+    
+  # Consumer lag metrics
+  - pattern: kafka.server<type=FetcherLagMetrics, name=ConsumerLag, clientId=(.+), topic=(.+), partition=(.+)><>Value
+    name: kafka_server_fetcherlagmetrics_consumerlag
+    type: GAUGE
+    labels:
+      clientId: "$1"
+      topic: "$2"
+      partition: "$3"
+      
+  # Request metrics
+  - pattern: kafka.network<type=RequestMetrics, name=RequestsPerSec, request=(.+)><>Count
+    name: kafka_network_requestmetrics_requestspersec_count
+    type: COUNTER
+    labels:
+      request: "$1"
+      
+  # JVM metrics
+  - pattern: java.lang<type=Memory><HeapMemoryUsage>(\w+)
+    name: jvm_memory_heap_$1
+    type: GAUGE
+    
+  - pattern: java.lang<type=Memory><NonHeapMemoryUsage>(\w+)
+    name: jvm_memory_nonheap_$1
+    type: GAUGE
+    
+  - pattern: java.lang<type=GarbageCollector, name=(.+)><>CollectionCount
+    name: jvm_gc_collection_count
+    type: COUNTER
+    labels:
+      name: "$1"
+      
+  - pattern: java.lang<type=GarbageCollector, name=(.+)><>CollectionTime
+    name: jvm_gc_collection_time_seconds
+    type: COUNTER
+    labels:
+      name: "$1"
+      
+  - pattern: java.lang<type=OperatingSystem><>(\w+)
+    name: jvm_os_$1
+    type: GAUGE

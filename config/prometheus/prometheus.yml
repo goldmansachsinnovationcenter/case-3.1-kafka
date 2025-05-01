@@ -1,0 +1,39 @@
+# Prometheus configuration for Kafka monitoring
+global:
+  scrape_interval: 15s     # How frequently to scrape targets
+  evaluation_interval: 15s # How frequently to evaluate rules
+  scrape_timeout: 10s      # How long until a scrape request times out
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Rule files to load
+rule_files:
+  - "kafka_alerts.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Kafka metrics exporter
+  - job_name: 'kafka-metrics-exporter'
+    static_configs:
+      - targets: ['kafka-metrics-exporter:9308']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Kafka consumer lag monitor
+  - job_name: 'kafka-consumer-lag-monitor'
+    static_configs:
+      - targets: ['kafka-consumer-lag-monitor:9309']
+    metrics_path: '/metrics'
+    scrape_interval: 60s
+    scrape_timeout: 10s
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

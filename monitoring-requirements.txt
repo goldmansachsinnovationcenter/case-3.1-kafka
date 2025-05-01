@@ -1,0 +1,5 @@
+# Kafka Prometheus Monitoring - Requirements
+kafka-python>=2.0.2
+prometheus-client>=0.16.0
+pytest>=7.3.1
+pytest-mock>=3.10.0
