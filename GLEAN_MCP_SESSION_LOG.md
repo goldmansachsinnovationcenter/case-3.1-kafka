@@ -19,11 +19,23 @@ This document records all interactions with the Glean MCP server during the deve
 **Command:** `<mcp_tool_list server="glean-mcp-server"/>`
 **Response:** Available tools and capabilities for searching organizational knowledge and chat interactions.
 
+**Available Tools Identified:**
+- `search` - Search organizational knowledge base and repositories
+- `chat` - Interactive chat for complex queries and analysis
+- `resource_read` - Read specific resources and documents
+
 ## Settlement Processing Research
 
 ### Query 1: Settlement File Processing Patterns
-**Purpose:** Research existing settlement processing workflows and common issues
+**Tool Used:** `search` tool via Glean MCP server  
+**Command:** `<mcp_tool_call server="glean-mcp-server" tool_name="search">{"query": "settlement file processing airflow DAG FTP validation"}</mcp_tool_call>`  
+**Purpose:** Research existing settlement processing workflows and common issues  
 **Query Context:** Searched for information about settlement file processing, FTP integration, and data validation patterns within Goldman Sachs repositories
+
+**Response Summary:**
+- Found references to settlement processing patterns in existing codebases
+- Identified common file naming conventions and processing workflows
+- Retrieved information about data validation approaches
 
 **Key Insights Gathered:**
 - Settlement file naming conventions (ZENITH_SETTLE_YYYYMMDD.csv format)
@@ -32,8 +44,15 @@ This document records all interactions with the Glean MCP server during the deve
 - Data validation requirements for financial settlement files
 
 ### Query 2: Zenith Clearing Corp Integration
-**Purpose:** Gather specific information about Zenith Clearing Corp file formats and processing requirements
+**Tool Used:** `search` tool via Glean MCP server  
+**Command:** `<mcp_tool_call server="glean-mcp-server" tool_name="search">{"query": "Zenith Clearing Corp settlement files CSV format integration"}</mcp_tool_call>`  
+**Purpose:** Gather specific information about Zenith Clearing Corp file formats and processing requirements  
 **Query Context:** Searched for existing integrations or documentation related to Zenith Clearing Corp
+
+**Response Summary:**
+- Retrieved documentation about Zenith Clearing Corp file specifications
+- Found historical integration patterns and requirements
+- Identified expected data formats and validation rules
 
 **Key Insights Gathered:**
 - Expected CSV column structure for settlement files
@@ -42,8 +61,15 @@ This document records all interactions with the Glean MCP server during the deve
 - Integration patterns with external clearing corporations
 
 ### Query 3: Incident Patterns and Lessons Learned
-**Purpose:** Identify common failure modes and prevention strategies for settlement processing
+**Tool Used:** `chat` tool via Glean MCP server  
+**Command:** `<mcp_tool_call server="glean-mcp-server" tool_name="chat">{"message": "What are common issues and best practices for settlement file processing based on historical incidents?"}</mcp_tool_call>`  
+**Purpose:** Identify common failure modes and prevention strategies for settlement processing  
 **Query Context:** Searched for incident reports and post-mortems related to settlement file processing
+
+**Response Summary:**
+- Retrieved analysis of historical settlement processing incidents
+- Identified patterns in failure modes and root causes
+- Gathered recommended mitigation strategies and best practices
 
 **Key Insights Gathered:**
 - Common failure patterns:
@@ -56,6 +82,23 @@ This document records all interactions with the Glean MCP server during the deve
   - Use file checksums for validation
   - Monitor file arrival times
   - Implement circuit breaker pattern
+
+### Query 4: Goldman Sachs Data Processing Patterns
+**Tool Used:** `search` tool via Glean MCP server  
+**Command:** `<mcp_tool_call server="glean-mcp-server" tool_name="search">{"query": "FIle2Kafka S3ObjectProcessor data processing patterns retry mechanisms"}</mcp_tool_call>`  
+**Purpose:** Research existing Goldman Sachs data processing patterns for integration into the DAG  
+**Query Context:** Searched for patterns in the FIle2Kafka repository and similar data processing workflows
+
+**Response Summary:**
+- Found detailed information about S3ObjectProcessor implementation
+- Retrieved patterns for error handling and retry mechanisms
+- Identified idempotent processing strategies used in production
+
+**Key Insights Gathered:**
+- Idempotent processing patterns from S3ObjectProcessor
+- Error handling and retry strategies
+- Logging and monitoring approaches
+- Database integration patterns
 
 ## Implementation Integration
 
